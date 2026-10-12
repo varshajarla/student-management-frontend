@@ -1,0 +1,56 @@
+.student-dashboard {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 24px;
+  font-family: Arial, sans-serif;
+  color: #18324b;
+  text-align: center;
+}
+
+.student-dashboard h1 {
+  color: #174b85;
+  margin-bottom: 10px;
+}
+
+.student-dashboard h2 {
+  color: #174b85;
+}
+
+.student-info,
+.student-academics {
+  margin: 25px 0;
+  padding: 22px;
+  background: #f5f8fc;
+  border: 1px solid #dce5ef;
+  border-radius: 12px;
+  text-align: left;
+}
+
+.student-info p,
+.student-academics p {
+  margin: 12px 0;
+}
+
+.student-dashboard button {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 6px;
+  background: #0875d1;
+  color: white;
+  cursor: pointer;
+}
+
+.student-dashboard button:hover {
+  background: #075da8;
+}
+
+.on-track {
+  color: green;
+  font-weight: bold;
+}
+
+.needs-support,
+.student-error {
+  color: #c62828;
+  font-weight: bold;
+}
