@@ -1,16 +1,31 @@
-# React + Vite
+# Student Management System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A full-stack application for managing student details and academic performance.
 
-Currently, two official plugins are available:
+## Live Output
+The live website will be available here:
+[Open Student Management System](YOUR_FRONTEND_LIVE_URL)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Frontend Repository
+https://github.com/varshajarla/student-management-frontend
 
-## React Compiler
+## Backend Repository
+https://github.com/varshajarla/student-management-backend
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Backend API
+http://localhost:8080/students
 
-## Expanding the ESLint configuration
+## Technologies
+- React
+- Java
+- Spring Boot
+- MySQL
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Features
+- Student Registration and Login
+- Faculty Login
+- Student Dashboard
+- Faculty Dashboard
+- Attendance Management
+- Marks Management
+- Academic Performance Tracking
