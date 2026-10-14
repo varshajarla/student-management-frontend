@@ -1,264 +1,448 @@
-import { useState } from "react";
-import StudentDashboard from "./StudentDashboard";
-import FacultyDashboard from "./FacultyDashboard";
+import { useEffect, useState } from "react";
 import "./App.css";
 
 const API_URL = "http://localhost:8080";
 
-function App() {
-  const [page, setPage] = useState("welcome");
+export default function App() {
+  const [page, setPage] = useState("home");
   const [role, setRole] = useState("STUDENT");
+  const [isRegister, setIsRegister] = useState(false);
+
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [user, setUser] = useState(null);
+
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  function openLogin(selectedRole) {
-    setRole(selectedRole);
-    setEmail("");
-    setPassword("");
-    setMessage("");
-    setPage("login");
-  }
+  // Student details
+  const [studentName, setStudentName] = useState("");
+  const [studentEmail, setStudentEmail] = useState("");
+  const [department, setDepartment] = useState("");
+  const [students, setStudents] = useState([]);
+  const [studentsLoading, setStudentsLoading] = useState(false);
+  const [studentMessage, setStudentMessage] = useState("");
 
-  function openRegister() {
-    setRole("STUDENT");
+  function openAuth(selectedRole, register) {
+    setRole(selectedRole);
+    setIsRegister(register);
     setFullName("");
     setEmail("");
     setPassword("");
     setMessage("");
-    setPage("register");
+    setPage("auth");
   }
 
-  async function handleLogin(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
     setMessage("");
+
+    if (!email.trim() || !password) {
+      setMessage("Please enter your email and password.");
+      return;
+    }
+
+    if (isRegister && !fullName.trim()) {
+      setMessage("Please enter your full name.");
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/auth/login`, {
+      const endpoint = isRegister ? "/auth/register" : "/auth/login";
+
+      const body = {
+        email: email.trim().toLowerCase(),
+        password,
+        role,
+      };
+
+      if (isRegister) {
+        body.fullName = fullName.trim();
+      }
+
+      const response = await fetch(API_URL + endpoint, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: email.trim(),
-          password,
-          role,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(data.message || "Login failed.");
+        throw new Error(data.message || "Please check your account details.");
       }
 
-      const accountRole = String(data.role || role).toUpperCase();
-
-      if (accountRole === "STUDENT") {
-        setPage("student");
-      } else if (accountRole === "FACULTY") {
-        setPage("faculty");
-      } else {
-        throw new Error("Unknown account role.");
+      if (isRegister) {
+        setMessage("Registration successful! Please log in.");
+        setIsRegister(false);
+        setPassword("");
+        return;
       }
 
-      setPassword("");
+      if (!data.role || data.role.toUpperCase() !== role) {
+        setMessage("Your account type does not match your selection.");
+        return;
+      }
+
+      setUser(data);
       setMessage("");
+      setPage(role === "FACULTY" ? "faculty" : "student");
     } catch (error) {
       setMessage(
-        error.message || "Unable to connect to the backend."
+        error.message || "Cannot connect to the backend. Check Spring Boot."
       );
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleRegister(event) {
-    event.preventDefault();
-    setMessage("");
-    setLoading(true);
+  async function loadStudents() {
+    setStudentsLoading(true);
+    setStudentMessage("");
 
     try {
-      const response = await fetch(`${API_URL}/auth/register`, {
+      const response = await fetch(`${API_URL}/students`);
+
+      if (!response.ok) {
+        throw new Error("Unable to load student details.");
+      }
+
+      const data = await response.json();
+      setStudents(Array.isArray(data) ? data : []);
+    } catch (error) {
+      setStudentMessage(
+        error.message || "Cannot connect to the student API."
+      );
+    } finally {
+      setStudentsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (page === "faculty") {
+      loadStudents();
+    }
+  }, [page]);
+
+  async function addStudent(event) {
+    event.preventDefault();
+    setStudentMessage("");
+
+    if (!studentName.trim() || !studentEmail.trim() || !department.trim()) {
+      setStudentMessage("Please complete all student details.");
+      return;
+    }
+
+    setStudentsLoading(true);
+
+    try {
+      const response = await fetch(`${API_URL}/students`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          fullName: fullName.trim(),
-          email: email.trim(),
-          password,
-          role: "STUDENT",
+          name: studentName.trim(),
+          email: studentEmail.trim(),
+          department: department.trim(),
         }),
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(data.message || "Registration failed.");
+        throw new Error(data.message || "Unable to save student.");
       }
 
-      setMessage("Registration successful! Please log in.");
-      setPassword("");
-      setPage("login");
-      setRole("STUDENT");
+      setStudentMessage("Student details saved successfully!");
+      setStudentName("");
+      setStudentEmail("");
+      setDepartment("");
+      await loadStudents();
     } catch (error) {
-      setMessage(
-        error.message || "Unable to connect to the backend."
+      setStudentMessage(
+        error.message || "Could not save student. Check the backend."
       );
     } finally {
-      setLoading(false);
+      setStudentsLoading(false);
     }
   }
 
   function logout() {
-    setPage("welcome");
+    setUser(null);
+    setPage("home");
+    setRole("STUDENT");
+    setIsRegister(false);
     setFullName("");
     setEmail("");
     setPassword("");
     setMessage("");
-    setRole("STUDENT");
-  }
-
-  if (page === "student") {
-    return (
-      <>
-        <button onClick={logout}>Logout</button>
-        <StudentDashboard />
-      </>
-    );
-  }
-
-  if (page === "faculty") {
-    return (
-      <>
-        <button onClick={logout}>Logout</button>
-        <FacultyDashboard />
-      </>
-    );
+    setStudentMessage("");
   }
 
   return (
-    <main className="auth-container">
-      <h1>Student Management System</h1>
-      <p>Manage student information and academic progress.</p>
+    <div className="app">
+      <header className="topbar">
+        <h2>🎓 Student Management System</h2>
 
-      {page === "welcome" && (
-        <section className="auth-card">
-          <h2>Welcome!</h2>
-          <p>Choose your account type to continue.</p>
-
-          <button onClick={() => openLogin("STUDENT")}>
-            Student Login
+        {user && (
+          <button className="logout-btn" onClick={logout}>
+            Logout
           </button>
+        )}
+      </header>
 
-          <button onClick={openRegister}>
-            Student Register
-          </button>
+      {page === "home" && (
+        <main className="welcome-box">
+          <div className="welcome-icon">📚</div>
+          <h1>Welcome!</h1>
+          <h2>Student Management System</h2>
 
-          <hr />
+          <p>
+            Manage student details, attendance, marks, and academic
+            performance in one place.
+          </p>
 
-          <button onClick={() => openLogin("FACULTY")}>
-            Faculty Login
-          </button>
-        </section>
+          <div className="home-actions">
+            <button
+              className="primary-btn"
+              onClick={() => openAuth("STUDENT", false)}
+            >
+              Student Login
+            </button>
+
+            <button
+              className="secondary-btn"
+              onClick={() => openAuth("STUDENT", true)}
+            >
+              Student Register
+            </button>
+
+            <button
+              className="faculty-btn"
+              onClick={() => openAuth("FACULTY", false)}
+            >
+              Faculty Login
+            </button>
+
+            <button
+              className="register-faculty-btn"
+              onClick={() => openAuth("FACULTY", true)}
+            >
+              Faculty Registration
+            </button>
+          </div>
+
+          <p className="small-note">
+            Faculty accounts should be approved by an administrator in a
+            real deployment.
+          </p>
+        </main>
       )}
 
-      {(page === "login" || page === "register") && (
-        <section className="auth-card">
-          <h2>
-            {role === "STUDENT" ? "Student" : "Faculty"}{" "}
-            {page === "login" ? "Login" : "Registration"}
-          </h2>
-
-          <form
-            onSubmit={
-              page === "login" ? handleLogin : handleRegister
-            }
-          >
-            {page === "register" && (
-              <input
-                type="text"
-                placeholder="Full name"
-                value={fullName}
-                onChange={(event) =>
-                  setFullName(event.target.value)
-                }
-                required
-              />
-            )}
-
-            <input
-              type="email"
-              placeholder="Email address"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
-            />
-
-            <input
-              type="password"
-              placeholder="Password (minimum 8 characters)"
-              value={password}
-              onChange={(event) =>
-                setPassword(event.target.value)
-              }
-              minLength={8}
-              required
-            />
-
-            <button type="submit" disabled={loading}>
-              {loading
-                ? "Please wait..."
-                : page === "login"
-                  ? "Login"
-                  : "Create Account"}
-            </button>
-          </form>
-
-          {message && (
-            <p className="auth-message" role="status">
-              {message}
-            </p>
-          )}
-
-          {role === "STUDENT" && (
-            <p>
-              {page === "login"
-                ? "New student? "
-                : "Already registered? "}
-
-              <button
-                type="button"
-                onClick={() => {
-                  setPage(
-                    page === "login" ? "register" : "login"
-                  );
-                  setPassword("");
-                  setMessage("");
-                }}
-              >
-                {page === "login" ? "Register" : "Login"}
-              </button>
-            </p>
-          )}
-
+      {page === "auth" && (
+        <main className="auth-card">
           <button
+            className="back-btn"
             type="button"
             onClick={() => {
-              setPage("welcome");
+              setPage("home");
               setMessage("");
             }}
           >
-            Back
+            ← Back
           </button>
-        </section>
+
+          <h1>
+            {role === "FACULTY" ? "👩‍🏫 Faculty" : "🎓 Student"}{" "}
+            {isRegister ? "Registration" : "Login"}
+          </h1>
+
+          <p className="subtitle">
+            {isRegister ? "Create your account" : "Enter your login details"}
+          </p>
+
+          <form onSubmit={handleSubmit}>
+            {isRegister && (
+              <label>
+                Full Name
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(event) => setFullName(event.target.value)}
+                  placeholder="Enter your full name"
+                  required
+                />
+              </label>
+            )}
+
+            <label>
+              Email Address
+              <input
+                type="email"
+                value={email}
+                onChange={(event) => setEmail(event.target.value)}
+                placeholder="Enter your email"
+                required
+              />
+            </label>
+
+            <label>
+              Password
+              <input
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder="Enter your password"
+                required
+              />
+            </label>
+
+            {message && <p className="message">{message}</p>}
+
+            <button className="submit-btn" type="submit" disabled={loading}>
+              {loading
+                ? "Please wait..."
+                : isRegister
+                ? "Create Account"
+                : "Login"}
+            </button>
+          </form>
+
+          <p className="switch-auth">
+            {isRegister ? "Already have an account?" : "Don't have an account?"}{" "}
+            <button
+              type="button"
+              onClick={() => {
+                setIsRegister(!isRegister);
+                setMessage("");
+                setPassword("");
+              }}
+            >
+              {isRegister ? "Login" : "Register"}
+            </button>
+          </p>
+        </main>
       )}
-    </main>
+
+      {page === "student" && user && (
+        <main className="dashboard-card">
+          <h1>🎓 Student Dashboard</h1>
+          <p>Welcome, {user.fullName || user.email}!</p>
+
+          <div className="dashboard-grid">
+            <div className="dashboard-item">
+              <h3>📅 Attendance</h3>
+              <p>View attendance records.</p>
+            </div>
+
+            <div className="dashboard-item">
+              <h3>📝 Marks</h3>
+              <p>View academic marks.</p>
+            </div>
+
+            <div className="dashboard-item">
+              <h3>📈 Performance</h3>
+              <p>Review academic progress.</p>
+            </div>
+          </div>
+        </main>
+      )}
+
+      {page === "faculty" && user && (
+        <main className="dashboard-card">
+          <h1>👩‍🏫 Faculty Dashboard</h1>
+          <p>Welcome, {user.fullName || user.email}!</p>
+
+          <section className="auth-card">
+            <h2>➕ Add Student Details</h2>
+
+            <form onSubmit={addStudent}>
+              <label>
+                Student Full Name
+                <input
+                  type="text"
+                  value={studentName}
+                  onChange={(event) => setStudentName(event.target.value)}
+                  placeholder="Enter student name"
+                  required
+                />
+              </label>
+
+              <label>
+                Student Email
+                <input
+                  type="email"
+                  value={studentEmail}
+                  onChange={(event) => setStudentEmail(event.target.value)}
+                  placeholder="Enter student email"
+                  required
+                />
+              </label>
+
+              <label>
+                Department
+                <input
+                  type="text"
+                  value={department}
+                  onChange={(event) => setDepartment(event.target.value)}
+                  placeholder="Example: ECE"
+                  required
+                />
+              </label>
+
+              {studentMessage && (
+                <p className="message" role="status">
+                  {studentMessage}
+                </p>
+              )}
+
+              <button
+                className="submit-btn"
+                type="submit"
+                disabled={studentsLoading}
+              >
+                {studentsLoading ? "Please wait..." : "Save Student"}
+              </button>
+            </form>
+          </section>
+
+          <section>
+            <h2>📋 Student Details</h2>
+
+            <button
+              className="primary-btn"
+              onClick={loadStudents}
+              disabled={studentsLoading}
+            >
+              Refresh Student List
+            </button>
+
+            {students.length === 0 ? (
+              <p>
+                {studentsLoading
+                  ? "Loading students..."
+                  : "No students found yet."}
+              </p>
+            ) : (
+              <div className="dashboard-grid">
+                {students.map((student) => (
+                  <div className="dashboard-item" key={student.id}>
+                    <h3>{student.name}</h3>
+                    <p>Email: {student.email}</p>
+                    <p>Department: {student.department}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        </main>
+      )}
+
+      <footer className="footer">
+        Student Management System | Academic Progress Made Easier
+      </footer>
+    </div>
   );
 }
-
-export default App;
