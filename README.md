@@ -1,27 +1,41 @@
-# Student Management System
+# 🎓 Student Management System
 
-A full-stack application for managing student details and academic performance.
+A full-stack web application designed to manage student details and academic performance.
 
-## Live Output
-The live website will be available here:
-[Open Student Management System](YOUR_FRONTEND_LIVE_URL)
+## 📌 Project Overview
 
-## Frontend Repository
-https://github.com/varshajarla/student-management-frontend
+The Student Management System helps students and faculty manage student information, attendance, marks, and academic progress.
 
-## Backend Repository
-https://github.com/varshajarla/student-management-backend
+## 🔗 Project Links
 
-## Backend API
-http://localhost:8080/students
+### 💻 Frontend Repository
+[View Frontend Source Code](https://github.com/varshajarla/student-management-frontend)
 
-## Technologies
+### ⚙️ Backend Repository
+[View Backend Source Code](https://github.com/varshajarla/student-management-backend)
+
+### 🌐 Live Output
+**Status:** Deployment pending.
+
+The live website link will be added after deployment.
+
+### 🖥️ Backend API
+[View Student API](http://localhost:8080/students)
+
+**Note:** This API link works only on your computer while the Spring Boot backend is running. A public link requires backend deployment.
+
+## 🛠️ Technologies Used
+
 - React
 - Java
 - Spring Boot
 - MySQL
+- HTML
+- CSS
+- JavaScript
 
-## Features
+## ✨ Features
+
 - Student Registration and Login
 - Faculty Login
 - Student Dashboard
@@ -29,3 +43,12 @@ http://localhost:8080/students
 - Attendance Management
 - Marks Management
 - Academic Performance Tracking
+
+## 🚀 How to Run the Project
+
+### 1. Start the Backend
+
+Open the backend folder in the terminal and run:
+
+```bash
+.\mvnw.cmd spring-boot:run
